@@ -10,6 +10,21 @@
 #include "pc_api_internal.h"
 #include <float.h>
 
+
+#include <sys/time.h>
+#include <unistd.h>
+
+#include <omp.h>
+
+#define NTHREADS (4)
+uint64_t micros_since_epoch2(){
+    struct timeval tv;
+    uint64_t micros = 0;
+    gettimeofday(&tv, NULL);  
+    micros =  ((uint64_t)tv.tv_sec) * 1000000 + tv.tv_usec;
+    return micros;
+}
+
 /*
 * Instantiate a new PCDOUBLESTATS for calculation, and set up
 * initial values for min/max/sum
@@ -144,46 +159,168 @@ pc_stats_clone(const PCSTATS *stats)
 	return s;
 }
 
+
+
+
+
+int
+pc_patch_uncompressed_compute_stats2(PCPATCH_UNCOMPRESSED *pa)
+{
+	uint64_t start = micros_since_epoch2();
+        int i, j;
+        const PCSCHEMA *schema = pa->schema;
+        double val;
+        PCDOUBLESTATS *dstats = pc_dstats_new(pa->schema->ndims);
+
+        if ( pa->stats )
+                pc_stats_free(pa->stats);
+
+        /* Point on stack for fast access to values in patch */
+        PCPOINT pt;
+        pt.readonly = PC_TRUE;
+        pt.schema = schema;
+        pt.data = pa->data;
+
+        /* We know npoints right away */
+        dstats->npoints = pa->npoints;
+
+
+        for ( i = 0; i < pa->npoints; i++ )
+        {
+                for ( j = 0; j < schema->ndims; j++ )
+                {
+                        pc_point_get_double(&pt, schema->dims[j], &val);
+                        /* Check minimum */
+                        if ( val < dstats->dims[j].min )
+                                dstats->dims[j].min = val;
+                        /* Check maximum */
+                        if ( val > dstats->dims[j].max )
+                                dstats->dims[j].max = val;
+                        /* Add to sum */
+                        dstats->dims[j].sum += val;
+                }
+                /* Advance to next point */
+                pt.data += schema->size;
+        }
+
+//      printf("pc_patch_uncompressed_compute_stats 2:  %d x %d %li\n",  pa->npoints, schema->ndims, micros_since_epoch2());
+        pa->stats = pc_stats_new_from_dstats(pa->schema, dstats);
+//      printf("pc_patch_uncompressed_compute_stats 3: %d x %d %li\n",  pa->npoints, schema->ndims, micros_since_epoch2());
+        pc_dstats_free(dstats);
+	printf("Serial time %lf\n", (micros_since_epoch2()-start)/1000000.);
+        return PC_SUCCESS;
+}
+
+
+
+
+
 int
 pc_patch_uncompressed_compute_stats(PCPATCH_UNCOMPRESSED *pa)
 {
-	int i, j;
+	uint64_t start =  micros_since_epoch2();
 	const PCSCHEMA *schema = pa->schema;
-	double val;
+	int tt, i, j;
 	PCDOUBLESTATS *dstats = pc_dstats_new(pa->schema->ndims);
-
 	if ( pa->stats )
 		pc_stats_free(pa->stats);
 
 	/* Point on stack for fast access to values in patch */
-	PCPOINT pt;
-	pt.readonly = PC_TRUE;
-	pt.schema = schema;
-	pt.data = pa->data;
+	PCPOINT pt[NTHREADS];
+	int count[NTHREADS];
+	for(tt=0; tt<NTHREADS; ++tt){
+		pt[tt].readonly = PC_TRUE;
+		pt[tt].schema = schema;
+		count[tt] = 0;
+	}
+	//pt.data = pa->data;
 
 	/* We know npoints right away */
 	dstats->npoints = pa->npoints;
 
-	for ( i = 0; i < pa->npoints; i++ )
-	{
-		for ( j = 0; j < schema->ndims; j++ )
-		{
-			pc_point_get_double(&pt, schema->dims[j], &val);
-			/* Check minimum */
-			if ( val < dstats->dims[j].min )
-				dstats->dims[j].min = val;
-			/* Check maximum */
-			if ( val > dstats->dims[j].max )
-				dstats->dims[j].max = val;
-			/* Add to sum */
-			dstats->dims[j].sum += val;
-		}
-		/* Advance to next point */
-		pt.data += schema->size;
+	//printf("pc_patch_uncompressed_compute_stats %d x %d %li\n",  pa->npoints, schema->ndims, micros_since_epoch2());
+	
+	omp_set_dynamic(0);
+	omp_set_num_threads(NTHREADS);
+	
+
+// 	PCDOUBLESTATS **dstats_arr = (PCDOUBLESTATS**) malloc(sizeof(PCDOUBLESTATS*)*NTHREADS);
+ 	PCDOUBLESTATS *dstats_arr[NTHREADS];
+	for(tt=0; tt<NTHREADS; ++tt){
+		dstats_arr[tt] = pc_dstats_new(pa->schema->ndims);
 	}
 
+
+
+	int t, total=0, jj, ii;
+	double val;
+	#pragma omp parallel  shared(schema, dstats, dstats_arr, pt, pa, count) private(t, total, jj, ii, val)
+	{
+        total = 0;	
+	t = omp_get_thread_num();	
+	//printf("Starting Thread %d\n", t);
+	//fflush(stdout);
+	#pragma omp for private(val,t)
+	for (ii = 0; ii < pa->npoints; ii++ )
+	{
+		t = omp_get_thread_num();
+//		printf("For 1 %d %d\n", omp_get_thread_num(), total);
+		count[t]++;
+		total++;
+		pt[t].data = pa->data + (schema->size*ii);
+//		printf("Thread %i %i\n", t, i);
+//		fflush(stdout);
+		for (jj = 0; jj < schema->ndims; jj++ )
+		{
+			pc_point_get_double(&pt[t], schema->dims[jj], &val);
+			/* Check minimum */
+			if ( val < dstats_arr[t]->dims[jj].min ){
+				dstats_arr[t]->dims[jj].min = val;
+			}
+			/* Check maximum */
+			if ( val > dstats_arr[t]->dims[jj].max ){
+				dstats_arr[t]->dims[jj].max = val;
+			}
+			/* Add to sum */
+			dstats_arr[t]->dims[jj].sum += val;
+		}
+		/* Advance to next point */
+	}
+	//printf("Total %d %d\n", t, total);
+	}
+	
+//	printf("Fim paralelo\n");
+//	fflush(stdout);
+	for(tt=0;tt<NTHREADS; ++tt){
+//		printf("Reduce %d %d\n", tt, count[tt]);
+//		fflush(stdout);
+	 	for (j = 0; j < schema->ndims; j++ )
+                {
+                        /* Check minimum */
+                        if ( dstats_arr[tt]->dims[j].min < dstats->dims[j].min ){
+                                dstats->dims[j].min = dstats_arr[tt]->dims[j].min;
+                        }
+                        /* Check maximum */
+                        if ( dstats_arr[tt]->dims[j].max > dstats->dims[j].max ){
+                                dstats->dims[j].max = dstats_arr[tt]->dims[j].max;
+                        }
+                        /* Add to sum */
+                        dstats->dims[j].sum += dstats_arr[tt]->dims[j].sum;
+                }
+	}
+
+//	printf("Free\n");
+//	fflush(stdout);
+	for(tt=0;tt<NTHREADS; ++tt){
+		pc_dstats_free(dstats_arr[tt]);
+	}
+
+//	printf("pc_patch_uncompressed_compute_stats 2:  %d x %d %li\n",  pa->npoints, schema->ndims, micros_since_epoch2());
 	pa->stats = pc_stats_new_from_dstats(pa->schema, dstats);
+//	printf("pc_patch_uncompressed_compute_stats 3: %d x %d %li\n",  pa->npoints, schema->ndims, micros_since_epoch2());
 	pc_dstats_free(dstats);
+	printf("Parallel time %lf\n", (micros_since_epoch2()-start)/1000000.);
+//	fflush(stdout);
 	return PC_SUCCESS;
 }
 

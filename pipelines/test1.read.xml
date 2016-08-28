@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Pipeline version="1.0">
+    <Writer type="writers.text">
+        <Option name="filename">/home/vitor/patches1.txt</Option>
+        <Option name="cache_block_size">32184</Option>
+        <Option name="spatialreference">EPSG:4326</Option>
+        <Reader type="readers.pgpointcloud">
+            <Option name="connection">host='localhost' dbname='pc_test1' user='postgres' password=masterkey</Option>
+            <Option name="table">patches</Option>
+            <Option name="column">pa</Option>
+            <Option name="srid">4326</Option>
+        </Reader>
+    </Writer>
+</Pipeline>

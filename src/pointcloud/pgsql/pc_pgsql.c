@@ -522,28 +522,35 @@ pc_patch_dimensional_serialize(const PCPATCH *patch_in)
 	//    pcpoint[3] stats;
 	//    serialized_pcbytes[ndims] dimensions;
 
+	//elog(LOG,"pc_patch_stats_serialize 1");
 	int i;
 	uint8_t *buf;
 	size_t serpch_size = pc_patch_serialized_size(patch_in);
 	SERIALIZED_PATCH *serpch = pcalloc(serpch_size);
 	const PCPATCH_DIMENSIONAL *patch = (PCPATCH_DIMENSIONAL*)patch_in;
 
+	//elog(LOG,"pc_patch_stats_serialize 2");
 	assert(patch_in);
 	assert(patch_in->type == PC_DIMENSIONAL);
 
+	//elog(LOG,"pc_patch_stats_serialize 3");
 	/* Copy basics */
 	serpch->pcid = patch->schema->pcid;
 	serpch->npoints = patch->npoints;
 	serpch->bounds = patch->bounds;
 	serpch->compression = patch->type;
 
+	//elog(LOG,"pc_patch_stats_serialize 4");
 	/* Get a pointer to the data area */
 	buf = serpch->data;
 
+	//elog(LOG,"pc_patch_stats_serialize 5");
 	/* Write stats into the buffer */
 	if ( patch->stats )
 	{
+	//	elog(LOG,"pc_patch_stats_serialize 6");
 		buf += pc_patch_stats_serialize(buf, patch->schema, patch->stats);
+	//	elog(LOG,"pc_patch_stats_serialize 7");
 	}
 	else
 	{
@@ -551,6 +558,7 @@ pc_patch_dimensional_serialize(const PCPATCH *patch_in)
 	}
 
 	/* Write each dimension in after the stats */
+	//elog(LOG,"pc_patch_dimensional_serialize %d",  patch->schema->ndims);
 	for ( i = 0; i < patch->schema->ndims; i++ )
 	{
 		size_t bsize = 0;
@@ -559,6 +567,7 @@ pc_patch_dimensional_serialize(const PCPATCH *patch_in)
 		buf += bsize;
 	}
 
+	//elog(LOG,"pc_patch_stats_serialize 10 ");
 	SET_VARSIZE(serpch, serpch_size);
 	return serpch;
 }
@@ -718,7 +727,9 @@ pc_patch_serialize(const PCPATCH *patch_in, void *userdata)
 	*/
 	if ( patch->type != patch->schema->compression )
 	{
+		//elog(LOG,"PC_PATCH_SERIALIZE 1");
 		patch = pc_patch_compress(patch_in, userdata);
+		//elog(LOG,"PC_PATCH_SERIALIZE 2");
 	}
 
 	switch( patch->type )
@@ -726,21 +737,25 @@ pc_patch_serialize(const PCPATCH *patch_in, void *userdata)
 	case PC_NONE:
 	{
 		serpatch = pc_patch_uncompressed_serialize(patch);
+		//elog(LOG,"PC_PATCH_SERIALIZE NONE");
 		break;
 	}
 	case PC_DIMENSIONAL:
 	{
 		serpatch = pc_patch_dimensional_serialize(patch);
+		//elog(LOG,"PC_PATCH_SERIALIZE dimensional");
 		break;
 	}
 	case PC_GHT:
 	{
 		serpatch = pc_patch_ght_serialize(patch);
+		//elog(LOG,"PC_PATCH_SERIALIZE ght");
 		break;
 	}
 	case PC_LAZPERF:
 	{
 		serpatch = pc_patch_lazperf_serialize(patch);
+		//elog(LOG,"PC_PATCH_SERIALIZE lazperf");
 		break;
 	}
 	default:

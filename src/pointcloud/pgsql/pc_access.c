@@ -15,6 +15,18 @@
 #include "lib/stringinfo.h"
 #include "pc_api_internal.h" /* for pcpatch_summary */
 
+#include <sys/time.h>
+#include <unistd.h>
+
+uint64_t micros_since_epoch(){
+    struct timeval tv;
+    uint64_t micros = 0;
+    gettimeofday(&tv, NULL);  
+    micros =  ((uint64_t)tv.tv_sec) * 1000000 + tv.tv_usec;
+    return micros;
+}
+
+
 /* General SQL functions */
 Datum pcpoint_get_value(PG_FUNCTION_ARGS);
 Datum pcpoint_get_values(PG_FUNCTION_ARGS);
@@ -360,7 +372,7 @@ Datum pointcloud_agg_transfn(PG_FUNCTION_ARGS)
 		elog(ERROR, "pointcloud_agg_transfn called in non-aggregate context");
 		aggcontext = NULL;  /* keep compiler quiet */
 	}
-
+	
 	if ( PG_ARGISNULL(0) )
 	{
 		a = (abs_trans*) palloc(sizeof(abs_trans));
@@ -689,7 +701,6 @@ Datum pcpatch_summary(PG_FUNCTION_ARGS)
   text *ret;
   const char *comma = "";
   int i;
-
   serpa = PG_GETHEADERX_SERPATCH_P(0, stats_size_guess);
   schema = pc_schema_from_pcid(serpa->pcid, fcinfo);
   if ( serpa->compression == PC_DIMENSIONAL )
@@ -841,6 +852,7 @@ Datum pc_version(PG_FUNCTION_ARGS)
 PG_FUNCTION_INFO_V1(pcpatch_get_stat);
 Datum pcpatch_get_stat(PG_FUNCTION_ARGS)
 {
+
 	static int stats_size_guess = 400;
 	SERIALIZED_PATCH *serpa = PG_GETHEADERX_SERPATCH_P(0, stats_size_guess);
 	PCSCHEMA *schema = pc_schema_from_pcid(serpa->pcid, fcinfo);
@@ -851,7 +863,6 @@ Datum pcpatch_get_stat(PG_FUNCTION_ARGS)
 	SERIALIZED_POINT *serpt = NULL;
 	float8 double_result;
 	int rv = 1;
-
 
 	if ( PG_NARGS() > 2 ) {
 		/* TODO: only get small slice ? */
@@ -898,6 +909,7 @@ Datum pcpatch_get_stat(PG_FUNCTION_ARGS)
 			PG_RETURN_NULL();
 		}
 		pfree(dim_str);
+
 		PG_RETURN_DATUM(DirectFunctionCall1(float8_numeric, Float8GetDatum(double_result)));
 	}
 }

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Pipeline version="1.0">
+    <Writer type="writers.pgpointcloud">
+        <Option name="connection">host='localhost' dbname='pc_test1' user='postgres' password=masterkey</Option>
+        <Option name="table">HUML6510C8920</Option>
+        <Option name="srid">31980</Option>
+        <Filter type="filters.chipper">
+            <Option name="capacity">600</Option>
+            <Filter type="filters.cache">
+                <Reader type="readers.las">
+                    <Option name="filename">/home/vitor/cap-349-pgpointcloud/data/HUML6510C8920.las</Option>
+                    <Option name="spatialreference">EPSG:31980</Option>
+                </Reader>
+            </Filter>
+        </Filter>
+    </Writer>
+</Pipeline>
