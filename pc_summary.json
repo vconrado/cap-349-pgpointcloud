@@ -1,0 +1,150 @@
+{
+    "pcid": 2,
+    "npts": 2933330,
+    "srid": 31980,
+    "compr": "dimensional",
+    "dims": [{
+        "pos": 0,
+        "name": "Intensity",
+        "size": 2,
+        "type": "uint16_t",
+        "compr": "sigbits",
+        "stats": {
+            "min": 2,
+            "max": 173,
+            "avg": 32
+        }
+    }, {
+        "pos": 1,
+        "name": "ReturnNumber",
+        "size": 1,
+        "type": "uint8_t",
+        "compr": "sigbits",
+        "stats": {
+            "min": 1,
+            "max": 2,
+            "avg": 2
+        }
+    }, {
+        "pos": 2,
+        "name": "NumberOfReturns",
+        "size": 1,
+        "type": "uint8_t",
+        "compr": "sigbits",
+        "stats": {
+            "min": 1,
+            "max": 3,
+            "avg": 2
+        }
+    }, {
+        "pos": 3,
+        "name": "ScanDirectionFlag",
+        "size": 1,
+        "type": "uint8_t",
+        "compr": "rle",
+        "stats": {
+            "min": 0,
+            "max": 0,
+            "avg": 0
+        }
+    }, {
+        "pos": 4,
+        "name": "EdgeOfFlightLine",
+        "size": 1,
+        "type": "uint8_t",
+        "compr": "rle",
+        "stats": {
+            "min": 0,
+            "max": 0,
+            "avg": 0
+        }
+    }, {
+        "pos": 5,
+        "name": "Classification",
+        "size": 1,
+        "type": "uint8_t",
+        "compr": "sigbits",
+        "stats": {
+            "min": 1,
+            "max": 5,
+            "avg": 5
+        }
+    }, {
+        "pos": 6,
+        "name": "ScanAngleRank",
+        "size": 4,
+        "type": "float",
+        "compr": "rle",
+        "stats": {
+            "min": 0,
+            "max": 0,
+            "avg": 0
+        }
+    }, {
+        "pos": 7,
+        "name": "UserData",
+        "size": 1,
+        "type": "uint8_t",
+        "compr": "rle",
+        "stats": {
+            "min": 0,
+            "max": 0,
+            "avg": 0
+        }
+    }, {
+        "pos": 8,
+        "name": "PointSourceId",
+        "size": 2,
+        "type": "uint16_t",
+        "compr": "sigbits",
+        "stats": {
+            "min": 1,
+            "max": 8,
+            "avg": 4
+        }
+    }, {
+        "pos": 9,
+        "name": "GpsTime",
+        "size": 8,
+        "type": "double",
+        "compr": "zlib",
+        "stats": {
+            "min": 78450.7,
+            "max": 80456.4,
+            "avg": 79315.4
+        }
+    }, {
+        "pos": 10,
+        "name": "X",
+        "size": 8,
+        "type": "double",
+        "compr": "zlib",
+        "stats": {
+            "min": 651000,
+            "max": 651126,
+            "avg": 651057
+        }
+    }, {
+        "pos": 11,
+        "name": "Y",
+        "size": 8,
+        "type": "double",
+        "compr": "zlib",
+        "stats": {
+            "min": 8.92058e+06,
+            "max": 8.921e+06,
+            "avg": 8.92084e+06
+        }
+    }, {
+        "pos": 12,
+        "name": "Z",
+        "size": 8,
+        "type": "double",
+        "compr": "zlib",
+        "stats": {
+            "min": 137.03,
+            "max": 213.53,
+            "avg": 167.817
+        }
+    }]
+}
