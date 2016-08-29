@@ -1,0 +1,15 @@
+{
+  "pipeline":[
+    {
+      "type":"readers.las",
+      "filename":"/home/vitor/cap-349-pgpointcloud/data/HUML6510C8920.las",
+      "spatialreference":"EPSG:31980",
+      "extra_dims":"Intensity=uint16"
+    },
+    {
+      "type":"writers.text",
+      "format": "csv",
+      "filename":"/home/vitor/cap-349-pgpointcloud/data/HUML6510C8920.las.txt"
+    }
+  ]
+}
