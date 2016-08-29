@@ -164,7 +164,7 @@ pc_stats_clone(const PCSTATS *stats)
 
 
 int
-pc_patch_uncompressed_compute_stats2(PCPATCH_UNCOMPRESSED *pa)
+pc_patch_uncompressed_compute_stats(PCPATCH_UNCOMPRESSED *pa)
 {
 	uint64_t start = micros_since_epoch2();
         int i, j;
@@ -216,7 +216,7 @@ pc_patch_uncompressed_compute_stats2(PCPATCH_UNCOMPRESSED *pa)
 
 
 int
-pc_patch_uncompressed_compute_stats(PCPATCH_UNCOMPRESSED *pa)
+pc_patch_uncompressed_compute_stats2(PCPATCH_UNCOMPRESSED *pa)
 {
 	uint64_t start =  micros_since_epoch2();
 	const PCSCHEMA *schema = pa->schema;
@@ -264,12 +264,9 @@ pc_patch_uncompressed_compute_stats(PCPATCH_UNCOMPRESSED *pa)
 	for (ii = 0; ii < pa->npoints; ii++ )
 	{
 		t = omp_get_thread_num();
-//		printf("For 1 %d %d\n", omp_get_thread_num(), total);
 		count[t]++;
 		total++;
 		pt[t].data = pa->data + (schema->size*ii);
-//		printf("Thread %i %i\n", t, i);
-//		fflush(stdout);
 		for (jj = 0; jj < schema->ndims; jj++ )
 		{
 			pc_point_get_double(&pt[t], schema->dims[jj], &val);
@@ -284,9 +281,7 @@ pc_patch_uncompressed_compute_stats(PCPATCH_UNCOMPRESSED *pa)
 			/* Add to sum */
 			dstats_arr[t]->dims[jj].sum += val;
 		}
-		/* Advance to next point */
 	}
-	//printf("Total %d %d\n", t, total);
 	}
 	
 //	printf("Fim paralelo\n");

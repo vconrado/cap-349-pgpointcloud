@@ -12,7 +12,7 @@ N=$3
 exec_sql(){
 psql -U postgres -d $DBNAME -h localhost --o /dev/null <<EOF
 \timing
-select PC_Summary(pa) from "$TBNAME"
+select PC_Summary(PC_Union(pa)) from "$TBNAME" where id < 20000
 EOF
 }
 
