@@ -1,0 +1,25 @@
+{
+  "pipeline":[
+    {
+      "type":"readers.las",
+      "filename":"/home/vitor/cap-349-pgpointcloud/data/HUML6470C8921.las",
+      "spatialreference":"EPSG:31980"
+    },
+    {
+      "type":"filters.chipper",
+      "capacity":400
+    },
+    {
+        "type": "filters.reprojection",
+        "in_srs": "EPSG:31980",
+        "out_srs": "EPSG:4326"
+    },
+    {
+      "type":"writers.pgpointcloud",
+      "connection":"host='localhost' dbname='pc_humaita_big_ght' user='postgres' password='masterkey'",
+      "table":"HUML6470C8921",
+      "compression":"ght",
+      "srid":"31980"
+    }
+  ]
+}

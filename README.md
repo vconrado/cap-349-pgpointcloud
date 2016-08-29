@@ -17,11 +17,6 @@ Passos
 
 1.1) Removida a pasta .git (para poder commitar esse código dentro do meu repositório )
 
-
-
-
-
-
 INSTALAÇÃO NO SERVIDOR:
 
 Especificação do servidor:
